@@ -17,6 +17,9 @@ jobs:
           INFO_JSON=$(jq -r '.info' Info.json)
           SUPPORTED_DEVICES=$(jq -r '.Apple[].platform' SupportedDevices.json)
           SUPPORTED_DEVICES_BOOL=$(jq -r '.Apple[].enabled' SupportedDevices.json)
+          echo "\:\:set\-output name\=APP\_NAME\:\:</span>{APP_NAME}"
+          echo "\:\:set\-output name\=APP\_VERSION\:\:</span>{APP_VERSION}"
+          echo "\:\:set\-output name\=INFO\_JSON\:\:</span>{INFO_JSON}"
 
       - name: Create Xcode Project
         run: |
