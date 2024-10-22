@@ -1,9 +1,10 @@
 {
-  "name-app": "YourAppName", //E.G Galaxy Attack: Alien Shooter
-  "test-version": false, // whether or not the app will be Pre-Release in releases tab.
-  "version": "1.0.0", //Version of IPA and DMG
-  "releases-tag": "", // Unused, releases tag will be APPNAME-VERSION-PRERELEASEORNOT
-  "description": "This is a description of your app.", //description of app and releases
-  "changelog": "This is a changelog for your app.", //changelog for releases
-  "dylibName": "YourDylibName" //self-explanetory
+  "name-app": "YourAppName",
+  "test-version": false, 
+  "version": "1.0.0",
+  "releases-tag": "TAG:",
+  "description": "This is a description of your release.",
+  "changelog": "This is a changelog for your release.",
+  "dylibName": "YourDylibName",
+  "bundle-id": "com.something.app"
 }
