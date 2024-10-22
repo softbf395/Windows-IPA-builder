@@ -25,11 +25,19 @@ jobs:
           TESTING_APP=$(jq -r '.testingApp' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
 
+      - name: Create Xcode Projects (if necessary)
+        run: |
+          for platform in "${SUPPORTED_PLATFORMS[@]}"; do
+            if [[ "${SUPPORTED_PLATFORMS_BOOL[$i]}" == "true" && "${platform}" != "watchOS" && "${platform}" != "tvOS" ]]; then
+              xcodebuild -create-xcworkspace -project "src/${platform}/YourProjectName.xcodeproj" -workspace "src/${platform}/YourProjectName.xcworkspace"
+            fi
+          done
+
       - name: Build for Supported Platforms
         run: |
           for i in "${!SUPPORTED_PLATFORMS[@]}"; do
             if [[ "${SUPPORTED_PLATFORMS_BOOL[$i]}" == "true" ]]; then
-              xcodebuild -configuration Release -project YourProjectName.xcodeproj -scheme YourSchemeName -destination "platform=${SUPPORTED_PLATFORMS[$i]},arch=arm64"
+              xcodebuild -configuration Release -workspace "src/${SUPPORTED_PLATFORMS[$i]}/YourProjectName.xcworkspace" -scheme YourSchemeName -destination "platform=${SUPPORTED_PLATFORMS[$i]},arch=arm64"
             fi
           done
 
@@ -39,6 +47,28 @@ jobs:
             if [[ "${SUPPORTED_LANGUAGES_BOOL[$i]}" == "true" ]]; then
               # Your language installation command here, using SUPPORTED_LANGUAGES[$i]
             fi
+          done
+
+      - name: Build Dylibs
+        run: |
+          xcodebuild -configuration Release -project YourDylibsProject.xcodeproj -scheme YourDylibScheme -destination "platform=iOS,arch=arm64"
+          xcodebuild -configuration Release -project YourDylibsProject.xcodeproj -scheme YourDylibScheme -destination "platform=macOS,arch=x86_64"
+          xcodebuild -configuration Release -project YourDylibsProject.xcodeproj -scheme YourDylibScheme -destination "platform=iOS,arch=arm64,simulator=true"
+          xcodebuild -configuration Release -project YourDylibsProject.xcodeproj -scheme YourDylibScheme -destination "platform=macOS,arch=x86_64,simulator=true"
+
+      - name: Copy Dylibs to src/<OS>Addons/
+        run: |
+          DYLIB_NAME=$(jq -r '.info.dylibName' YourDylibsProject.xcodeproj/project.pbxproj)
+          cp -r build/Release-iphoneos/dylib${DYLIB_NAME}.dylib src/iOSAddons/Dylibs/
+          cp -r build/Release-macos/dylib${DYLIB_NAME}.dylib src/macOSAddons/Dylibs/
+          cp -r build/Release-iphonesimulator/dylib${DYLIB_NAME}.dylib src/iOSAddons/Dylibs/
+          cp -r build/Release-macosx/dylib${DYLIB_NAME}.dylib src/macOSAddons/Dylibs/
+
+      - name: Export IPA and DMG
+        run: |
+          for platform in "${SUPPORTED_PLATFORMS[@]}"; do
+            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat ipa -exportOptionsPlist exportOptions.plist
+            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat dmg -exportOptionsPlist exportOptions.plist
           done
 
       - name: Create GitHub Release
@@ -51,11 +81,6 @@ jobs:
             ChangeLog: ${{ INFO_JSON.changelog }}
           draft: ${{ TESTING_APP }}
           prerelease: ${{ TESTING_APP }}
-
-      - name: Commit Changes
-        run: |
-          git add .
-          git commit -m "Updated artifacts"
 
       - name: Upload Artifacts to GitHub Release
         uses: actions/upload-release-asset@v1
