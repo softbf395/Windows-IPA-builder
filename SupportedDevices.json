@@ -1,0 +1,12 @@
+{
+  "Apple": [
+    {
+      "platform": "iOS",
+      "enabled": true
+    },
+    {
+      "platform": "macOS",
+      "enabled": false
+    }
+  ]
+}
