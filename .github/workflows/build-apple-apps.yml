@@ -15,20 +15,21 @@ jobs:
           APP_NAME=$(jq -r '.name-app' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
-          SUPPORTED_DEVICES=$(jq -r '.Apple[].platform' SupportedDevices.json)
-          SUPPORTED_DEVICES_BOOL=$(jq -r '.Apple[].enabled' SupportedDevices.json)
-          echo "\:\:set\-output name\=APP\_NAME\:\:</span>{APP_NAME}"
-          echo "\:\:set\-output name\=APP\_VERSION\:\:</span>{APP_VERSION}"
-          echo "\:\:set\-output name\=INFO\_JSON\:\:</span>{INFO_JSON}"
+          SUPPORTED_DEVICES=($(jq -r '.Apple[].platform' SupportedDevices.json))
+          SUPPORTED_DEVICES_BOOL=($(jq -r '.Apple[].enabled' SupportedDevices.json))
+          
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+          echo "INFO_JSON=$INFO_JSON" >> $GITHUB_ENV
 
       - name: Create Xcode Project
         run: |
-          if [[ "$SUPPORTED_DEVICES_BOOL[iOS]" == "true" ]]; then
-            xcodebuild -create-project -name "${{ APP_NAME }}" -platform ios -target "YourTargetName" -organizationname "YourOrganization" -bundleidentifier "${{ INFO_JSON.bundle-id }}" -language "Objective-C" -sdk "iphoneos" -output-path "builds/${{ github.ref_name }}/iOS.xcodeproj"
+          if [[ "${SUPPORTED_DEVICES_BOOL[0]}" == "true" ]]; then
+            xcodebuild -create-project -name "${{ env.APP_NAME }}" -platform ios -target "YourTargetName" -organizationname "YourOrganization" -bundleidentifier "${{ env.INFO_JSON.bundle-id }}" -language "Objective-C" -sdk "iphoneos" -output-path "builds/${{ github.ref_name }}/iOS.xcodeproj"
           fi
 
-          if [[ "$SUPPORTED_DEVICES_BOOL[macOS]" == "true" ]]; then
-            xcodebuild -create-project -name "${{ APP_NAME }}" -platform macos -target "YourTargetName" -organizationname "YourOrganization" -bundleidentifier "${{ INFO_JSON.bundle-id }}" -language "Objective-C" -sdk "macosx" -output-path "builds/${{ github.ref_name }}/macOS.xcodeproj"
+          if [[ "${SUPPORTED_DEVICES_BOOL[1]}" == "true" ]]; then
+            xcodebuild -create-project -name "${{ env.APP_NAME }}" -platform macos -target "YourTargetName" -organizationname "YourOrganization" -bundleidentifier "${{ env.INFO_JSON.bundle-id }}" -language "Objective-C" -sdk "macosx" -output-path "builds/${{ github.ref_name }}/macOS.xcodeproj"
           fi
 
       - name: Install Xcode
@@ -38,13 +39,13 @@ jobs:
 
       - name: Read Supported Languages and Coding Languages
         run: |
-          SUPPORTED_LANGUAGES=$(jq -r '.Language[].language' Languages.json)
-          SUPPORTED_LANGUAGES_BOOL=$(jq -r '.Language[].enabled' Languages.json)
-          SUPPORTED_CODING_LANGUAGES=$(jq -r '.CodingLanguages[].language' Languages.json)
-          SUPPORTED_CODING_LANGUAGES_BOOL=$(jq -r '.CodingLanguages[].enabled' Languages.json)
-          SUPPORTED_CODING_LANGUAGES_PLATFORM=$(jq -r '.CodingLanguages[].supportedPlatform' Languages.json)
-          SUPPORTED_CODING_LANGUAGES_SOURCE_DIR=$(jq -r '.CodingLanguages[].sourceDir' Languages.json)
-          SUPPORTED_CODING_LANGUAGES_INSTALL_COMMANDS=$(jq -r '.CodingLanguages[].installCommand' Languages.json)
+          SUPPORTED_LANGUAGES=($(jq -r '.Language[].language' Languages.json))
+          SUPPORTED_LANGUAGES_BOOL=($(jq -r '.Language[].enabled' Languages.json))
+          SUPPORTED_CODING_LANGUAGES=($(jq -r '.CodingLanguages[].language' Languages.json))
+          SUPPORTED_CODING_LANGUAGES_BOOL=($(jq -r '.CodingLanguages[].enabled' Languages.json))
+          SUPPORTED_CODING_LANGUAGES_PLATFORM=($(jq -r '.CodingLanguages[].supportedPlatform' Languages.json))
+          SUPPORTED_CODING_LANGUAGES_SOURCE_DIR=($(jq -r '.CodingLanguages[].sourceDir' Languages.json))
+          SUPPORTED_CODING_LANGUAGES_INSTALL_COMMANDS=($(jq -r '.CodingLanguages[].installCommand' Languages.json))
 
       - name: Install Custom Build Tools
         run: |
@@ -72,29 +73,25 @@ jobs:
 
       - name: Build for Supported Devices
         run: |
-          num_enabled_devices=$(jq -r '.Apple[] | select(.enabled == true) | length' SupportedDevices.json)
+          num_enabled_devices=$(jq '.Apple[] | select(.enabled == true)' SupportedDevices.json | wc -l)
           if [[ "$num_enabled_devices" -eq 0 ]]; then
             echo "At least one device must be enabled to build."
             exit 1
           fi
 
-          for i in "$SUPPORTED_DEVICES[@]"; do
-            if [[ "$SUPPORTED_DEVICES_BOOL[$i]" == "true" ]]; then
-              xcodebuild -configuration Release -workspace "builds/${{ github.ref_name }}/$SUPPORTED_DEVICES[$i].xcworkspace" -scheme YourSchemeName -destination "platform=$SUPPORTED_DEVICES[$i],arch=arm64"
+          for i in "${!SUPPORTED_DEVICES[@]}"; do
+            if [[ "${SUPPORTED_DEVICES_BOOL[$i]}" == "true" ]]; then
+              xcodebuild -configuration Release -workspace "builds/${{ github.ref_name }}/${SUPPORTED_DEVICES[$i]}.xcworkspace" -scheme YourSchemeName -destination "platform=${SUPPORTED_DEVICES[$i]},arch=arm64"
             fi
           done
 
       - name: Install Coding Languages
         run: |
-          for i in "$SUPPORTED_CODING_LANGUAGES[@]"; do
-            if [[ "$SUPPORTED_CODING_LANGUAGES_BOOL[$i]" == "true" ]]; then
-              # Check if the coding language is compatible with the current device
-              if [[ "$SUPPORTED_CODING_LANGUAGES_PLATFORM[$i]" == "$SUPPORTED_DEVICES[$i]" || "$SUPPORTED_CODING_LANGUAGES_PLATFORM[$i]" == "all" ]]; then
-                # Change to the source directory for the coding language
+          for i in "${!SUPPORTED_CODING_LANGUAGES[@]}"; do
+            if [[ "${SUPPORTED_CODING_LANGUAGES_BOOL[$i]}" == "true" ]]; then
+              if [[ "${SUPPORTED_CODING_LANGUAGES_PLATFORM[$i]}" == "${SUPPORTED_DEVICES[$i]}" || "${SUPPORTED_CODING_LANGUAGES_PLATFORM[$i]}" == "all" ]]; then
                 cd "${SUPPORTED_CODING_LANGUAGES_SOURCE_DIR[$i]}"
-
-                # Install the coding language using the specified command
-                eval "$SUPPORTED_CODING_LANGUAGES_INSTALL_COMMANDS[$i]"
+                eval "${SUPPORTED_CODING_LANGUAGES_INSTALL_COMMANDS[$i]}"
               fi
             fi
           done
@@ -109,26 +106,26 @@ jobs:
 
       - name: Export IPA and DMG
         run: |
-          for device in "$SUPPORTED_DEVICES[@]"; do
-            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat ipa -exportOptionsPlist exportOptions.plist -destination "platform=$SUPPORTED_DEVICES[$i],arch=arm64"
-            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat dmg -exportOptionsPlist exportOptions.plist -destination "platform=$SUPPORTED_DEVICES[$i],arch=arm64"
+          for device in "${!SUPPORTED_DEVICES[@]}"; do
+            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat ipa -exportOptionsPlist exportOptions.plist -destination "platform=${SUPPORTED_DEVICES[$i]},arch=arm64"
+            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat dmg -exportOptionsPlist exportOptions.plist -destination "platform=${SUPPORTED_DEVICES[$i]},arch=arm64"
           done
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
-          tag_name: "${{ APP_NAME }}-${{ APP_VERSION }}-${{ IS_TEST }}"
-          name: "${{ APP_NAME }} ${{ APP_VERSION }}"
+          tag_name: "${{ env.APP_NAME }}-${{ env.APP_VERSION }}-${{ env.IS_TEST }}"
+          name: "${{ env.APP_NAME }} ${{ env.APP_VERSION }}"
           body: |
-            Description: ${{ INFO_JSON.description }}
-            ChangeLog: ${{ INFO_JSON.changelog }}
-          draft: ${{ IS_TEST }}
-          prerelease: ${{ IS_TEST }}
+            Description: ${{ env.INFO_JSON.description }}
+            ChangeLog: ${{ env.INFO_JSON.changelog }}
+          draft: ${{ env.IS_TEST }}
+          prerelease: ${{ env.IS_TEST }}
 
       - name: Upload Artifacts to GitHub Release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/${{ APP_NAME }}-${{ APP_VERSION }}.ipa
-          asset_name: "${{ APP_NAME }}-${{ APP_VERSION }}.ipa"
+          asset_path: build/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.ipa
+          asset_name: "${{ env.APP_NAME }}-${{ env.APP_VERSION }}.ipa"
           asset_content_type: application/octet-stream
