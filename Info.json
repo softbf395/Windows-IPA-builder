@@ -3,8 +3,10 @@
   "test-version": false, 
   "version": "1.0.0",
   "releases-tag": "TAG:",
-  "description": "This is a description of your release.",
-  "changelog": "This is a changelog for your release.",
+  "info": {
+    "bundle-id": "com.yourcompany.yourapp",
+    "description": "This is your app.",
+    "changelog": "Initial release"
+  },
   "dylibName": "YourDylibName",
-  "bundle-id": "com.something.app"
 }
