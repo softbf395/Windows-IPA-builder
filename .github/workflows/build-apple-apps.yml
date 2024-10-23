@@ -1,133 +1,128 @@
-name: Build Apple Devices Apps
+name: Build Apps for Multiple Platforms
 
 on:
   workflow_dispatch:
 
 jobs:
-  apps:
+  build-apple:
     runs-on: macOS-latest
+    if: contains(fromJson(file('SupportedDevices.json')).Apple[*].enabled, true)
 
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Install Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable  # You can specify a version like '14.0'
-
+          xcode-version: latest-stable
 
       - name: Set Project Information
+        id: set-info
         run: |
           APP_NAME=$(jq -r '.name-app' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
           SUPPORTED_DEVICES=($(jq -r '.Apple[].platform' SupportedDevices.json))
           SUPPORTED_DEVICES_BOOL=($(jq -r '.Apple[].enabled' SupportedDevices.json))
-          
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
           echo "INFO_JSON=$INFO_JSON" >> $GITHUB_ENV
 
-      - name: Create Xcode Project
+      - name: Create Xcode Projects and Build
         run: |
-          if [[ "${SUPPORTED_DEVICES_BOOL[0]}" == "true" ]]; then
-            xcodebuild -create-project -name "${{ env.APP_NAME }}" -platform ios -target "YourTargetName" -organizationname "YourOrganization" -bundleidentifier "${{ env.INFO_JSON.bundle-id }}" -language "Objective-C" -sdk "iphoneos" -output-path "builds/${{ github.ref_name }}/iOS.xcodeproj"
-          fi
-
-          if [[ "${SUPPORTED_DEVICES_BOOL[1]}" == "true" ]]; then
-            xcodebuild -create-project -name "${{ env.APP_NAME }}" -platform macos -target "YourTargetName" -organizationname "YourOrganization" -bundleidentifier "${{ env.INFO_JSON.bundle-id }}" -language "Objective-C" -sdk "macosx" -output-path "builds/${{ github.ref_name }}/macOS.xcodeproj"
-          fi
-
-
-      - name: Read Supported Languages and Coding Languages
-        run: |
-          SUPPORTED_LANGUAGES=($(jq -r '.Language[].language' Languages.json))
-          SUPPORTED_LANGUAGES_BOOL=($(jq -r '.Language[].enabled' Languages.json))
-          SUPPORTED_CODING_LANGUAGES=($(jq -r '.CodingLanguages[].language' Languages.json))
-          SUPPORTED_CODING_LANGUAGES_BOOL=($(jq -r '.CodingLanguages[].enabled' Languages.json))
-          SUPPORTED_CODING_LANGUAGES_PLATFORM=($(jq -r '.CodingLanguages[].supportedPlatform' Languages.json))
-          SUPPORTED_CODING_LANGUAGES_SOURCE_DIR=($(jq -r '.CodingLanguages[].sourceDir' Languages.json))
-          SUPPORTED_CODING_LANGUAGES_INSTALL_COMMANDS=($(jq -r '.CodingLanguages[].installCommand' Languages.json))
-
-      - name: Install Custom Build Tools
-        run: |
-          # Install required build tools for your custom coding languages
-          # Example:
-          # brew install rust
-
-      - name: Build Custom Code
-        run: |
-          # Execute commands to build your custom code using your preferred build system
-          # Example for Rust:
-          # cargo build --release
-
-      - name: Create Dynamic Library
-        run: |
-          # Create a dynamic library (dylib) from your custom code
-          # Example for C++:
-          # clang++ -shared -o mylib.dylib mylib.cpp
-
-      - name: Link Dynamic Library to Xcode Project
-        run: |
-          # Link the built dylib to your Xcode project using appropriate commands
-          # Example:
-          # xcodebuild -project builds/${{ github.ref_name }}/iOS.xcodeproj -target YourTargetName -configuration Release -sdk iphoneos -configuration Debug -sdk iphonesimulator
-
-      - name: Build for Supported Devices
-        run: |
-          num_enabled_devices=$(jq '.Apple[] | select(.enabled == true)' SupportedDevices.json | wc -l)
-          if [[ "$num_enabled_devices" -eq 0 ]]; then
-            echo "At least one device must be enabled to build."
-            exit 1
-          fi
-
           for i in "${!SUPPORTED_DEVICES[@]}"; do
             if [[ "${SUPPORTED_DEVICES_BOOL[$i]}" == "true" ]]; then
-              xcodebuild -configuration Release -workspace "builds/${{ github.ref_name }}/${SUPPORTED_DEVICES[$i]}.xcworkspace" -scheme YourSchemeName -destination "platform=${SUPPORTED_DEVICES[$i]},arch=arm64"
+              echo "Building for ${SUPPORTED_DEVICES[$i]}"
+              xcodebuild -project "${{ env.APP_NAME }}.xcodeproj" -scheme "${{ env.APP_NAME }}" -sdk "${SUPPORTED_DEVICES[$i]}" -configuration Release
             fi
           done
 
-      - name: Install Coding Languages
+      - name: Archive Builds
         run: |
-          for i in "${!SUPPORTED_CODING_LANGUAGES[@]}"; do
-            if [[ "${SUPPORTED_CODING_LANGUAGES_BOOL[$i]}" == "true" ]]; then
-              if [[ "${SUPPORTED_CODING_LANGUAGES_PLATFORM[$i]}" == "${SUPPORTED_DEVICES[$i]}" || "${SUPPORTED_CODING_LANGUAGES_PLATFORM[$i]}" == "all" ]]; then
-                cd "${SUPPORTED_CODING_LANGUAGES_SOURCE_DIR[$i]}"
-                eval "${SUPPORTED_CODING_LANGUAGES_INSTALL_COMMANDS[$i]}"
-              fi
-            fi
-          done
+          mkdir -p builds/apple
+          cp -R build/Release-iphoneos/* builds/apple/
 
-      - name: Copy Dylibs to src/<OS>/Addons/
+  build-windows:
+    runs-on: windows-latest
+    if: contains(fromJson(file('SupportedDevices.json')).Other[*].Windows, true)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Windows DLL
         run: |
-          DYLIB_NAME=$(jq -r '.info.dylibName' YourDylibsProject.xcodeproj/project.pbxproj)
-          cp -r build/Release-iphoneos/dylib$DYLIB_NAME.dylib src/iOSAddons/Dylibs/
-          cp -r build/Release-macos/dylib$DYLIB_NAME.dylib src/macOSAddons/Dylibs/
-          cp -r build/Release-iphonesimulator/dylib$DYLIB_NAME.dylib src/iOSAddons/Dylibs/
-          cp -r build/Release-macosx/dylib$DYLIB_NAME.dylib src/macOSAddons/Dylibs/
+          echo "Building Windows DLL..."
+          # Replace with actual build commands for your DLL
+          clang++ -shared -o "windows-required-app-extension.dll" src/windows/your_code.cpp
 
-      - name: Export IPA and DMG
+      - name: Move DLL to Output Directory
         run: |
-          for device in "${!SUPPORTED_DEVICES[@]}"; do
-            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat ipa -exportOptionsPlist exportOptions.plist -destination "platform=${SUPPORTED_DEVICES[$i]},arch=arm64"
-            xcodebuild -exportArchive -archivePath build/YourAppName.xcarchive -exportPath build/YourAppName -exportFormat dmg -exportOptionsPlist exportOptions.plist -destination "platform=${SUPPORTED_DEVICES[$i]},arch=arm64"
-          done
+          mkdir -p builds/windows
+          mv windows-required-app-extension.dll builds/windows/
 
+  build-android:
+    runs-on: ubuntu-latest
+    if: contains(fromJson(file('SupportedDevices.json')).Other[*].Android, true)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Android SDK
+        run: |
+          echo "Setting up Android SDK..."
+          # You can use a specific version or latest here
+          sudo apt-get install -y android-sdk
+
+      - name: Build Android App
+        run: |
+          echo "Building Android App..."
+          # Replace with actual build commands, e.g., using Gradle
+          ./gradlew assembleRelease
+
+      - name: Move APK to Output Directory
+        run: |
+          mkdir -p builds/android
+          mv app/build/outputs/apk/release/app-release.apk builds/android/
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build-apple, build-windows, build-android]
+    steps:
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
-          tag_name: "${{ env.APP_NAME }}-${{ env.APP_VERSION }}-${{ env.IS_TEST }}"
+          tag_name: "${{ env.APP_NAME }}-${{ env.APP_VERSION }}"
           name: "${{ env.APP_NAME }} ${{ env.APP_VERSION }}"
           body: |
             Description: ${{ env.INFO_JSON.description }}
             ChangeLog: ${{ env.INFO_JSON.changelog }}
-          draft: ${{ env.IS_TEST }}
-          prerelease: ${{ env.IS_TEST }}
+          draft: ${{ fromJson(file('Info.json')).test-version }}
+          prerelease: ${{ fromJson(file('Info.json')).test-version }}
 
       - name: Upload Artifacts to GitHub Release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.ipa
-          asset_name: "${{ env.APP_NAME }}-${{ env.APP_VERSION }}.ipa"
+          asset_path: builds/windows/windows-required-app-extension.dll
+          asset_name: "windows-required-app-extension.dll"
           asset_content_type: application/octet-stream
+
+      - name: Upload Android APK
+        if: contains(fromJson(file('SupportedDevices.json')).Other[*].Android, true)
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: builds/android/app-release.apk
+          asset_name: "app-release.apk"
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload iOS and macOS builds
+        if: contains(fromJson(file('SupportedDevices.json')).Apple[*].enabled, true)
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: builds/apple/*
+          asset_name: "apple-build.zip"
+          asset_content_type: application/zip
