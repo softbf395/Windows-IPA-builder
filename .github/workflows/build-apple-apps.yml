@@ -26,7 +26,6 @@ jobs:
         id: set-info
         run: |
           chmod 644 Info.json SupportedDevices.json
-          APP_NAME=$(jq -r '.name' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
           TESTVERSION=$(jq -r '.test-version' Info.json)
@@ -41,7 +40,7 @@ jobs:
           for i in "${!SUPPORTED_DEVICES[@]}"; do
             if [[ "${SUPPORTED_DEVICES_BOOL[$i]}" == "true" ]]; then
               echo "Building for ${SUPPORTED_DEVICES[$i]}"
-              xcodebuild -project "${{ env.APP_NAME }}.xcodeproj" -scheme "${{ env.APP_NAME }}" -sdk "${SUPPORTED_DEVICES[$i]}" -configuration Release
+              xcodebuild -project "APP.xcodeproj" -scheme "APP" -sdk "${SUPPORTED_DEVICES[$i]}" -configuration Release
             fi
           done
 
@@ -112,7 +111,7 @@ jobs:
         id: set-info
         run: |
           
-          APP_NAME=$(jq -r '.name' Info.json)
+          
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
           TESTVERSION=$(jq -r '.test-version' Info.json)
@@ -126,8 +125,8 @@ jobs:
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
-          tag_name: "${APP_NAME}-${APP_VERSION}"
-          name: "${APP_NAME}-${APP_VERSION}"
+          tag_name: "APP-${APP_VERSION}"
+          name: "APP-${APP_VERSION}"
           body: |
             Description: "Description:${DESC} Changelog:${CHANGELOG}"
           draft: ${TESTVERSION}
