@@ -6,7 +6,6 @@ on:
 jobs:
   build-apple:
     runs-on: macOS-latest
-    if: contains(fromJson(file('SupportedDevices.json')).Apple[*].enabled, true)
 
     steps:
       - uses: actions/checkout@v3
@@ -29,6 +28,7 @@ jobs:
           APP_NAME=$(jq -r '.name-app' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
+          TESTVERSION=$(jq -r '.test-version' Info.json)
           SUPPORTED_DEVICES=($(jq -r '.Apple[].platform' SupportedDevices.json))
           SUPPORTED_DEVICES_BOOL=($(jq -r '.Apple[].enabled' SupportedDevices.json))
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
@@ -105,16 +105,33 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-apple, build-windows, build-android]
     steps:
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+      - name: Set Project Information
+        id: set-info
+        run: |
+          APP_NAME=$(jq -r '.name-app' Info.json)
+          APP_VERSION=$(jq -r '.version' Info.json)
+          INFO_JSON=$(jq -r '.info' Info.json)
+          TESTVERSION=$(jq -r '.test-version' Info.json)
+          SUPPORTED_DEVICES=($(jq -r '.Apple[].platform' SupportedDevices.json))
+          SUPPORTED_DEVICES_BOOL=($(jq -r '.Apple[].enabled' SupportedDevices.json))
+          DESC=$(jq -r '.description' Info.json)
+          CHANGELOG=$(jq -r '.changelog' Info.json)
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+          echo "INFO_JSON=$INFO_JSON" >> $GITHUB_ENV
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
-          tag_name: "${{ env.APP_NAME }}-${{ env.APP_VERSION }}"
-          name: "${{ env.APP_NAME }} ${{ env.APP_VERSION }}"
+          tag_name: "${APP_NAME}-${APP_VERSION}"
+          name: "${APP_NAME}-${APP_VERSION}"
           body: |
-            Description: ${{ env.INFO_JSON.description }}
-            ChangeLog: ${{ env.INFO_JSON.changelog }}
-          draft: ${{ fromJson(file('Info.json')).test-version }}
-          prerelease: ${{ fromJson(file('Info.json')).test-version }}
+            Description: "Description:${DESC} Changelog:${CHANGELOG}"
+          draft: ${TESTVERSION}
+          prerelease: ${TESTVERSION}
 
       - name: Upload Artifacts to GitHub Release
         uses: actions/upload-release-asset@v1
