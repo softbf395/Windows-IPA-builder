@@ -140,7 +140,6 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Android APK
-        if: contains(fromJson(file('SupportedDevices.json')).Other[*].Android, true)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -149,7 +148,6 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Upload iOS and macOS builds
-        if: contains(fromJson(file('SupportedDevices.json')).Apple[*].enabled, true)
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
