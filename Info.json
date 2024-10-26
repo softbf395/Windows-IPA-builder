@@ -1,5 +1,5 @@
 {
-  "name-app": "YourAppName",
+  "name": "YourAppName",
   "test-version": false, 
   "version": "1.0.0",
   "releases-tag": "TAG:",
