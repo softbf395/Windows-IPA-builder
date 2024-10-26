@@ -26,7 +26,7 @@ jobs:
         id: set-info
         run: |
           chmod 644 Info.json SupportedDevices.json
-          APP_NAME=$(jq -r '.name-app' Info.json)
+          APP_NAME=$(jq -r '.name' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
           TESTVERSION=$(jq -r '.test-version' Info.json)
@@ -112,7 +112,7 @@ jobs:
         id: set-info
         run: |
           
-          APP_NAME=$(jq -r '.name-app' Info.json)
+          APP_NAME=$(jq -r '.name' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
           TESTVERSION=$(jq -r '.test-version' Info.json)
