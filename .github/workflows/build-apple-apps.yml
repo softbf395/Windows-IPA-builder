@@ -25,6 +25,7 @@ jobs:
       - name: Set Project Information
         id: set-info
         run: |
+          chmod 644 Info.json SupportedDevices.json
           APP_NAME=$(jq -r '.name-app' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
@@ -110,6 +111,7 @@ jobs:
       - name: Set Project Information
         id: set-info
         run: |
+          
           APP_NAME=$(jq -r '.name-app' Info.json)
           APP_VERSION=$(jq -r '.version' Info.json)
           INFO_JSON=$(jq -r '.info' Info.json)
