@@ -8,5 +8,7 @@
     "description": "This is your app.",
     "changelog": "Initial release"
   },
+  "changelog": "Initial release",
+  "description": "This is your app.",
   "dylibName": "YourDylibName",
 }
