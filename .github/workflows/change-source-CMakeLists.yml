@@ -15,7 +15,10 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install PyYaml
+        run: |
+          pip install pyyaml 
+
       - name: Generate CMakeLists.txt
         run: |
-          pip install pyyaml
           python fixer.py
