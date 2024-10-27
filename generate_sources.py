@@ -9,8 +9,7 @@ sources = []
 # Walk through the directory and collect .cpp and .m files
 for root, dirs, files in os.walk(source_dir):
     for file in files:
-        if file.endswith(('.cpp', '.m')):
-            sources.append(os.path.join(root, file))
+         sources.append(os.path.join(root, file))
 
 # Print the source files as a CMake variable
 print("set(SOURCES " + " ".join(sources) + ")")
