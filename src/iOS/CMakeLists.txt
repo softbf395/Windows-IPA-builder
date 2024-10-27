@@ -9,22 +9,19 @@ set(CMAKE_SYSTEM_NAME iOS)
 set(CMAKE_OSX_ARCHITECTURES "arm64")  # Target arm64 for iOS devices
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")  # Minimum iOS version
 
-# Get all specified file types from the parent directory of src/iOS (if one of the file types has a '#' then remove the # if your using that file type!)
-file(GLOB_RECURSE SOURCE_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/../*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../*.m"
-    #"${CMAKE_CURRENT_SOURCE_DIR}/../*.c"
-    #"${CMAKE_CURRENT_SOURCE_DIR}/../*.png"
-    #"${CMAKE_CURRENT_SOURCE_DIR}/../*.jpeg"
-    #"${CMAKE_CURRENT_SOURCE_DIR}/../*.webp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../*.mp3"
-    #"${CMAKE_CURRENT_SOURCE_DIR}/../*.ogg"
-    #"${CMAKE_CURRENT_SOURCE_DIR}/../*.json"
+# Get all specified file types from the parent directory of src/iOS (if one of the file types has a '#' then remove the # if your using that file extension!)
+add_executable(MyIOSApp 
+src/iOS/*.cpp
+src/iOS/*.h
+src/iOS/*.m
+src/iOS/*.mp3
+#src/iOS/*.c
+#src/iOS/*.png
+#src/iOS/*.webp
+#src/iOS/*.jpeg
+#src/iOS/*.ogg
+#src/iOS/*.json
 )
-
-# Create an executable target for the iOS app
-add_executable(MyIOSApp ${SOURCE_FILES})
 
 # Set target properties for creating an iOS bundle (.app)
 set_target_properties(MyIOSApp PROPERTIES
