@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 # Project name and version
-project(MyIOSApp VERSION 1.0)
+project(MyIOSApp VERSION 1.0 LANGUAGES CXX)
 
 # Specify CMake system as iOS
 set(CMAKE_SYSTEM_NAME iOS)
