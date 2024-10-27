@@ -22,3 +22,10 @@ jobs:
       - name: Generate CMakeLists.txt
         run: |
           python fixer.py
+          
+      - name: Add and Commit Changes
+        uses: actions/commit@v3
+        with:
+          message: "Actions:Updated CMakeLists.txt"  # Custom commit message
+          files: CMakeLists.txt  # Specify files to commit
+          branch: 'main'  # Branch to push changes to (optional)
