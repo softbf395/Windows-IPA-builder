@@ -19,6 +19,7 @@ file(GLOB_RECURSE SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/../*.mp3"
     "${CMAKE_CURRENT_SOURCE_DIR}/../*.ogg"
     "${CMAKE_CURRENT_SOURCE_DIR}/../*.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../*.plist"
 )
 
 # Create an executable target for the iOS app
