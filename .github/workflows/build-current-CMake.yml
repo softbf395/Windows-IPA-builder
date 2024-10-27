@@ -1,4 +1,4 @@
-name: iOS IPA Build
+name: iOS CMAKE app Build
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir -p build-ios
           cd build-ios
-          cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_NAME=iOS ../src/iOS
+          cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_NAME=iOS ../
           make
 
       - name: Package IPA
