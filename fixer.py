@@ -14,8 +14,7 @@ def generate_cmake(yaml_file):
     for pattern in source_patterns:
         for root, _, files in os.walk(source_dir):
             for file in files:
-                if file.endswith(pattern):
-                    source_files.append(os.path.join(root, file))
+                source_files.append(os.path.join(root, file))
 
     cmake_content = f"""
 cmake_minimum_required(VERSION 3.15)
