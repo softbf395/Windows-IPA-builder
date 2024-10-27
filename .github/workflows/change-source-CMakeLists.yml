@@ -1,0 +1,20 @@
+name: Generate CMakeLists.txt
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4 1 
+        with:
+          python-version: '3.x'
+
+      - name: Generate CMakeLists.txt
+        run: |
+          python fixer.py
