@@ -6,13 +6,18 @@ project(MyIOSApp VERSION 1.0 LANGUAGES CXX)
 
 # Specify CMake system as iOS
 set(CMAKE_SYSTEM_NAME iOS)
-set(CMAKE_OSX_ARCHITECTURES "arm64")  # Target arm64 for iOS devices
-set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")  # Minimum iOS version
+set(CMAKE_OSX_ARCHITECTURES "arm64")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
 
-# Get all specified file types from the parent directory of src/iOS (if one of the file types has a '#' then remove the # if your using that file extension!)
-add_executable(MyIOSApp 
-src/iOS
+# Run the Python script to generate the sources
+execute_process(
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/generate_sources.py
+    OUTPUT_VARIABLE SOURCES
+    OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+# Create the executable
+add_executable(MyIOSApp ${SOURCES})
 
 # Set target properties for creating an iOS bundle (.app)
 set_target_properties(MyIOSApp PROPERTIES
