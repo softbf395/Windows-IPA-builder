@@ -11,8 +11,12 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")  # Minimum iOS version
 
 # Get all specified file types from the parent directory of src/iOS (if one of the file types has a '#' then remove the # if your using that file extension!)
 add_executable(MyIOSApp 
-src/iOS/main.cpp
-src/iOS/Test.mp3
+*.cpp
+*.mp3
+#*.c
+#*.png
+#*.ogg
+*.m
 )
 
 # Set target properties for creating an iOS bundle (.app)
