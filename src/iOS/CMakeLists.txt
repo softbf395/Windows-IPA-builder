@@ -12,6 +12,8 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")  # Minimum iOS version
 # Get all specified file types from the parent directory of src/iOS (if one of the file types has a '#' then remove the # if your using that file type!)
 file(GLOB_RECURSE SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/../*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../*.m"
     #"${CMAKE_CURRENT_SOURCE_DIR}/../*.c"
     #"${CMAKE_CURRENT_SOURCE_DIR}/../*.png"
     #"${CMAKE_CURRENT_SOURCE_DIR}/../*.jpeg"
