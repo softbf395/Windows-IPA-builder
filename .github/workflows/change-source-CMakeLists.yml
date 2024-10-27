@@ -23,9 +23,12 @@ jobs:
         run: |
           python fixer.py
           
-      - name: Add and Commit Changes
-        uses: actions/commit@v3
+      - name: Run the Action
+        uses: devops-infra/action-commit-push@master
         with:
-          message: "Actions:Updated CMakeLists.txt"  # Custom commit message
-          files: CMakeLists.txt  # Specify files to commit
-          branch: 'main'  # Branch to push changes to (optional)
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          add_timestamp: true
+          commit_prefix: "[ACTIONS]"
+          commit_message: "source changes"
+          force: false
+          target_branch: update/version
