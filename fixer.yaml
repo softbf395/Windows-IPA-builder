@@ -1,5 +1,5 @@
 project_name: MyIOSApp
-source_dir: src
+source_dir: src/iOS
 source_patterns:
   - "*.m"
   - "*.mm"
