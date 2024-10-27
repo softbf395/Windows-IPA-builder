@@ -17,4 +17,5 @@ jobs:
 
       - name: Generate CMakeLists.txt
         run: |
+          pip install pyyaml
           python fixer.py
