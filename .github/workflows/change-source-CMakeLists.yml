@@ -31,4 +31,4 @@ jobs:
           commit_prefix: "[ACTIONS]"
           commit_message: "source changes"
           force: false
-          target_branch: update/version
+          target_branch: main
