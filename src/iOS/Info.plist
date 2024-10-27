@@ -54,12 +54,5 @@
             <true/>
         </dict>
     </dict>
-
-    <!-- App Transport Security (allowing HTTP connections) -->
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
 </dict>
 </plist>
